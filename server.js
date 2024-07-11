@@ -44,7 +44,7 @@ io.on('connection', (socket) => {
             x: startPositions[playerIndex].x, 
             y: startPositions[playerIndex].y 
           }],
-          color: ['red', 'green', 'blue', 'yellow'][playerIndex],
+          color: ['white', 'green', 'blue', 'yellow'][playerIndex],
           direction: { x: 1, y: 0 },
           score: 0,
           alive: true
@@ -133,8 +133,7 @@ function gameLoop(roomCode) {
     };
 
 
-    //
-    벽과의 충돌 체크
+    //벽과의 충돌 체크
     if (newHead.x < 0 || newHead.x >= canvasSize / gridSize || 
         newHead.y < 0 || newHead.y >= canvasSize / gridSize) {
       player.alive = false;
