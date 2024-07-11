@@ -3,11 +3,15 @@ const socket = io();
 let players = [];
 let foods = [];
 const gridSize = 20;
-const canvasSize = 350;  // 캔버스 크기를 350으로 변경
+const canvasSize = 350;
 let roomCode = '';
 let gameStarted = false;
 let myPlayerIndex = -1;
 let canvas;
+
+// 터치 이벤트를 위한 변수
+let xDown = null;
+let yDown = null;
 
 function setup() {
   canvas = createCanvas(canvasSize, canvasSize);
@@ -60,8 +64,54 @@ function keyPressed() {
   }
 }
 
-// 터치 이벤트 처리 함수들은 그대로 유지
+function handleTouchStart(evt) {
+  const firstTouch = evt.touches[0];
+  xDown = firstTouch.clientX;
+  yDown = firstTouch.clientY;
+}
 
+function handleTouchMove(evt) {
+  if (!xDown || !yDown) {
+    return;
+  }
+
+  const xUp = evt.touches[0].clientX;
+  const yUp = evt.touches[0].clientY;
+
+  const xDiff = xDown - xUp;
+  const yDiff = yDown - yUp;
+
+  let direction = { x: 0, y: 0 };
+
+  if (Math.abs(xDiff) > Math.abs(yDiff)) {
+    if (xDiff > 0) {
+      direction = { x: -1, y: 0 }; // 왼쪽으로 스와이프
+    } else {
+      direction = { x: 1, y: 0 }; // 오른쪽으로 스와이프
+    }
+  } else {
+    if (yDiff > 0) {
+      direction = { x: 0, y: -1 }; // 위로 스와이프
+    } else {
+      direction = { x: 0, y: 1 }; // 아래로 스와이프
+    }
+  }
+
+  if (gameStarted && myPlayerIndex !== -1 && players[myPlayerIndex].alive) {
+    if (direction.x !== 0 || direction.y !== 0) {
+      socket.emit('changeDirection', { roomCode, direction });
+    }
+  }
+
+  // 터치 이벤트 초기화
+  xDown = null;
+  yDown = null;
+  
+  // 이벤트의 기본 동작과 전파 방지
+  evt.preventDefault();
+}
+
+// 나머지 코드는 그대로 유지
 document.getElementById('createRoom').addEventListener('click', () => {
   socket.emit('createRoom');
 });
