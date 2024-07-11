@@ -3,7 +3,7 @@ const socket = io();
 let players = [];
 let foods = [];
 const gridSize = 20;
-const canvasSize = 400;
+const canvasSize = 350;  // 캔버스 크기를 350으로 변경
 let roomCode = '';
 let gameStarted = false;
 let myPlayerIndex = -1;
@@ -23,7 +23,7 @@ function draw() {
   
   if (gameStarted) {
     for (let food of foods) {
-      fill(255, 0, 0);  // 먹이를 빨간색으로 변경
+      fill(255, 0, 0);
       rect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
     }
     
@@ -36,7 +36,6 @@ function draw() {
       }
     }
     
-    // 점수 표시
     fill(255);
     textSize(16);
     textAlign(LEFT, TOP);
