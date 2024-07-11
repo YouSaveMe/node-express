@@ -20,7 +20,12 @@ io.on('connection', (socket) => {
 
   socket.on('createRoom', () => {
     const roomCode = generateRoomCode();
-    rooms.set(roomCode, { players: [], foods: [], gameStarted: false, nextPlayerNumber: 1 });
+    rooms.set(roomCode, { 
+      players: [], 
+      foods: [], 
+      gameStarted: false,
+      nextPlayerNumber: 1  // 다음 플레이어 번호를 추적하기 위한 새 속성
+    });
     socket.join(roomCode);
     socket.emit('roomCreated', roomCode);
     io.to(roomCode).emit('playerJoined', 1);
@@ -47,7 +52,7 @@ io.on('connection', (socket) => {
             x: startPositions[playerIndex].x, 
             y: startPositions[playerIndex].y 
           }],
-          color: ['white', 'green', 'blue', 'yellow'][playerIndex],
+          color: ['red', 'green', 'blue', 'yellow'][playerIndex],
           direction: { x: 1, y: 0 },
           score: 0,
           alive: true
@@ -62,7 +67,6 @@ io.on('connection', (socket) => {
       socket.emit('roomNotFound');
     }
   });
-
 
   socket.on('startGame', (roomCode) => {
     if (rooms.has(roomCode)) {
@@ -181,9 +185,10 @@ function gameLoop(roomCode) {
   // 게임 종료 조건 확인
   // ...
 
-  io.to(roomCode).emit('gameState', {
-    players: room.players.map(p => ({...p, number: p.number})),
-    foods: room.foods });
+  io.to(roomCode).emit('gameState', { 
+    players: room.players.map(p => ({...p, number: p.number})),  // 플레이어 번호 포함
+    foods: room.foods 
+  });
 
   setTimeout(() => gameLoop(roomCode), 100);
 }
