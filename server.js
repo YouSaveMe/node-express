@@ -59,9 +59,53 @@ io.on('connection', (socket) => {
     }
   });
 
-  // 나머지 코드는 동일하게 유지
-  // ...
+  socket.on('startGame', (roomCode) => {
+    if (rooms.has(roomCode)) {
+      const room = rooms.get(roomCode);
+      room.gameStarted = true;
+      room.foods = generateFoods(room.players.length);
+      io.to(roomCode).emit('gameStarted', { players: room.players, foods: room.foods });
+      gameLoop(roomCode);
+    }
+  });
+
+  socket.on('changeDirection', ({ roomCode, direction }) => {
+    if (rooms.has(roomCode)) {
+      const room = rooms.get(roomCode);
+      const player = room.players.find(p => p.id === socket.id);
+      if (player && player.alive) {
+        // 반대 방향으로의 이동을 막습니다.
+        if (!(player.direction.x === -direction.x && player.direction.y === -direction.y)) {
+          player.direction = direction;
+        }
+      }
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('A user disconnected');
+    rooms.forEach((room, roomCode) => {
+      const index = room.players.findIndex(p => p.id === socket.id);
+      if (index !== -1) {
+        room.players.splice(index, 1);
+        io.to(roomCode).emit('playerLeft', room.players.length);
+        if (room.players.length === 0) {
+          rooms.delete(roomCode);
+        } else if (room.gameStarted) {
+          room.foods = adjustFoodCount(room.foods, room.players.length);
+        }
+      }
+    });
+  });
 });
+
+function generateFoods(count) {
+  const foods = [];
+  for (let i = 0; i < count; i++) {
+    foods.push(generateFood());
+  }
+  return foods;
+}
 
 function generateFood() {
   return {
@@ -82,10 +126,36 @@ function gameLoop(roomCode) {
       y: (player.segments[0].y + player.direction.y + gridWidth) % gridWidth
     };
 
-    // 충돌 체크 로직
-    // ...
 
-    if (!player.alive) return;
+    // 벽과의 충돌 체크
+    if (newHead.x < 0 || newHead.x >= canvasSize / gridSize || 
+        newHead.y < 0 || newHead.y >= canvasSize / gridSize) {
+      player.alive = false;
+      return;
+    }
+
+    // 다른 플레이어와의 충돌 체크
+    room.players.forEach(otherPlayer => {
+      if (otherPlayer.alive) {
+        for (let segment of otherPlayer.segments) {
+          if (newHead.x === segment.x && newHead.y === segment.y) {
+            if (player !== otherPlayer) {
+              if (player.segments.length <= otherPlayer.segments.length) {
+                player.alive = false;
+              } else {
+                otherPlayer.alive = false;
+              }
+            } else if (player === otherPlayer && player.segments.length > 1) {
+              // 자기 자신과 충돌
+              player.alive = false;
+            }
+            return;
+          }
+        }
+      }
+    });
+
+       if (!player.alive) return;
 
     const foodIndex = room.foods.findIndex(food => food.x === newHead.x && food.y === newHead.y);
     if (foodIndex !== -1) {
@@ -111,3 +181,4 @@ const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
