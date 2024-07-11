@@ -8,7 +8,7 @@ app.use(express.static('public'));
 
 const rooms = new Map();
 const gridSize = 20;
-const canvasSize = 340;  // 캔버스 크기를 350으로 변경
+const canvasSize = 400;
 const gridWidth = canvasSize / gridSize;
 
 function generateRoomCode() {
@@ -23,12 +23,11 @@ io.on('connection', (socket) => {
     rooms.set(roomCode, { 
       players: [], 
       foods: [], 
-      gameStarted: false,
-      nextPlayerNumber: 1  // 다음 플레이어 번호를 추적하기 위한 새 속성
+      gameStarted: false
     });
     socket.join(roomCode);
+    addPlayerToRoom(socket, roomCode);
     socket.emit('roomCreated', roomCode);
-    io.to(roomCode).emit('playerJoined', 1);
   });
 
   socket.on('joinRoom', (roomCode) => {
@@ -36,30 +35,7 @@ io.on('connection', (socket) => {
       const room = rooms.get(roomCode);
       if (room.players.length < 4 && !room.gameStarted) {
         socket.join(roomCode);
-        const playerNumber = room.nextPlayerNumber;  // 현재 플레이어 번호
-        room.nextPlayerNumber++;  // 다음 플레이어를 위해 번호 증가
-        const playerIndex = room.players.length;
-        const startPositions = [
-          { x: Math.floor((canvasSize / gridSize) / 4), y: Math.floor((canvasSize / gridSize) / 4) },
-          { x: Math.floor((canvasSize / gridSize) * 3 / 4), y: Math.floor((canvasSize / gridSize) / 4) },
-          { x: Math.floor((canvasSize / gridSize) / 4), y: Math.floor((canvasSize / gridSize) * 3 / 4) },
-          { x: Math.floor((canvasSize / gridSize) * 3 / 4), y: Math.floor((canvasSize / gridSize) * 3 / 4) }
-        ];
-        const player = {
-          id: socket.id,
-          number: playerNumber,  // 플레이어 번호 추가
-          segments: [{ 
-            x: startPositions[playerIndex].x, 
-            y: startPositions[playerIndex].y 
-          }],
-          color: ['red', 'green', 'blue', 'yellow'][playerIndex],
-          direction: { x: 1, y: 0 },
-          score: 0,
-          alive: true
-        };
-        room.players.push(player);
-        socket.emit('joinedRoom', { roomCode, playerNumber, playerCount: room.players.length });
-        io.to(roomCode).emit('playerJoined', room.players.length);
+        addPlayerToRoom(socket, roomCode);
       } else {
         socket.emit('roomFull');
       }
@@ -83,7 +59,6 @@ io.on('connection', (socket) => {
       const room = rooms.get(roomCode);
       const player = room.players.find(p => p.id === socket.id);
       if (player && player.alive) {
-        // 반대 방향으로의 이동을 막습니다.
         if (!(player.direction.x === -direction.x && player.direction.y === -direction.y)) {
           player.direction = direction;
         }
@@ -97,7 +72,12 @@ io.on('connection', (socket) => {
       const index = room.players.findIndex(p => p.id === socket.id);
       if (index !== -1) {
         room.players.splice(index, 1);
-        io.to(roomCode).emit('playerLeft', room.players.length);
+        // Reassign player numbers
+        room.players.forEach((p, i) => p.number = i + 1);
+        io.to(roomCode).emit('playerLeft', { 
+          playerCount: room.players.length,
+          players: room.players
+        });
         if (room.players.length === 0) {
           rooms.delete(roomCode);
         } else if (room.gameStarted) {
@@ -107,6 +87,40 @@ io.on('connection', (socket) => {
     });
   });
 });
+
+function addPlayerToRoom(socket, roomCode) {
+  const room = rooms.get(roomCode);
+  const playerNumber = room.players.length + 1;
+  const startPositions = [
+    { x: Math.floor(gridWidth / 4), y: Math.floor(gridWidth / 4) },
+    { x: Math.floor(gridWidth * 3 / 4), y: Math.floor(gridWidth / 4) },
+    { x: Math.floor(gridWidth / 4), y: Math.floor(gridWidth * 3 / 4) },
+    { x: Math.floor(gridWidth * 3 / 4), y: Math.floor(gridWidth * 3 / 4) }
+  ];
+  const player = {
+    id: socket.id,
+    number: playerNumber,
+    segments: [{ 
+      x: startPositions[playerNumber - 1].x, 
+      y: startPositions[playerNumber - 1].y 
+    }],
+    color: ['red', 'green', 'blue', 'yellow'][playerNumber - 1],
+    direction: { x: 1, y: 0 },
+    score: 0,
+    alive: true
+  };
+  room.players.push(player);
+  socket.emit('joinedRoom', { 
+    roomCode, 
+    playerNumber, 
+    playerCount: room.players.length,
+    players: room.players
+  });
+  io.to(roomCode).emit('playerJoined', {
+    playerCount: room.players.length,
+    players: room.players
+  });
+}
 
 function generateFoods(count) {
   const foods = [];
