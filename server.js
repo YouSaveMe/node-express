@@ -8,7 +8,7 @@ app.use(express.static('public'));
 
 const rooms = new Map();
 const gridSize = 20;
-const canvasSize = 350;  // 캔버스 크기를 350으로 변경
+const canvasSize = 340;  // 캔버스 크기를 350으로 변경
 const gridWidth = canvasSize / gridSize;
 
 function generateRoomCode() {
