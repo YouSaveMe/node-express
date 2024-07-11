@@ -6,7 +6,7 @@ const gridSize = 20;
 const canvasSize = 340;
 let roomCode = '';
 let gameStarted = false;
-let myPlayerIndex = -1;
+let myPlayerNumber = -1;
 let canvas;
 let joined = false;
 
@@ -44,12 +44,11 @@ function draw() {
     fill(255);
     textSize(16);
     textAlign(LEFT, TOP);
-    players.forEach((player, index) => {
-      text(`Player ${index + 1}: ${player.score}`, 10, 10 + index * 20);
+    players.forEach((player) => {
+      text(`Player ${player.number}: ${player.score}`, 10, 10 + (player.number - 1) * 20);
     });
   }
 }
-
 function keyPressed() {
   if (!gameStarted || myPlayerIndex === -1 || !players[myPlayerIndex].alive) return;
   
@@ -145,10 +144,10 @@ socket.on('roomCreated', (code) => {
 
 socket.on('joinedRoom', (data) => {
   roomCode = data.roomCode;
-  myPlayerIndex = data.playerIndex;
+  myPlayerNumber = data.playerNumber;
   joined = true;
   document.getElementById('roomCode').innerText = `Room Code: ${roomCode}`;
-  if (myPlayerIndex === 0) {
+  if (myPlayerNumber === 1) {
     document.getElementById('startGame').style.display = 'inline-block';
   }
   updatePlayerCount(data.playerCount);
