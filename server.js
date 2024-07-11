@@ -20,7 +20,7 @@ io.on('connection', (socket) => {
 
   socket.on('createRoom', () => {
     const roomCode = generateRoomCode();
-    rooms.set(roomCode, { players: [], foods: [], gameStarted: false });
+    rooms.set(roomCode, { players: [], foods: [], gameStarted: false, nextPlayerNumber: 1 });
     socket.join(roomCode);
     socket.emit('roomCreated', roomCode);
     io.to(roomCode).emit('playerJoined', 1);
@@ -31,6 +31,8 @@ io.on('connection', (socket) => {
       const room = rooms.get(roomCode);
       if (room.players.length < 4 && !room.gameStarted) {
         socket.join(roomCode);
+        const playerNumber = room.nextPlayerNumber;  // 현재 플레이어 번호
+        room.nextPlayerNumber++;  // 다음 플레이어를 위해 번호 증가
         const playerIndex = room.players.length;
         const startPositions = [
           { x: Math.floor((canvasSize / gridSize) / 4), y: Math.floor((canvasSize / gridSize) / 4) },
@@ -40,6 +42,7 @@ io.on('connection', (socket) => {
         ];
         const player = {
           id: socket.id,
+          number: playerNumber,  // 플레이어 번호 추가
           segments: [{ 
             x: startPositions[playerIndex].x, 
             y: startPositions[playerIndex].y 
@@ -50,7 +53,7 @@ io.on('connection', (socket) => {
           alive: true
         };
         room.players.push(player);
-        socket.emit('joinedRoom', { roomCode, playerIndex, playerCount: room.players.length });
+        socket.emit('joinedRoom', { roomCode, playerNumber, playerCount: room.players.length });
         io.to(roomCode).emit('playerJoined', room.players.length);
       } else {
         socket.emit('roomFull');
@@ -178,7 +181,9 @@ function gameLoop(roomCode) {
   // 게임 종료 조건 확인
   // ...
 
-  io.to(roomCode).emit('gameState', { players: room.players, foods: room.foods });
+  io.to(roomCode).emit('gameState', {
+    players: room.players.map(p => ({...p, number: p.number})),
+    foods: room.foods });
 
   setTimeout(() => gameLoop(roomCode), 100);
 }
