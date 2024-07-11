@@ -23,6 +23,7 @@ io.on('connection', (socket) => {
     rooms.set(roomCode, { players: [], foods: [], gameStarted: false });
     socket.join(roomCode);
     socket.emit('roomCreated', roomCode);
+    io.to(roomCode).emit('playerJoined', 1);
   });
 
   socket.on('joinRoom', (roomCode) => {
@@ -32,10 +33,10 @@ io.on('connection', (socket) => {
         socket.join(roomCode);
         const playerIndex = room.players.length;
         const startPositions = [
-          { x: Math.floor(gridWidth / 4), y: Math.floor(gridWidth / 4) },
-          { x: Math.floor(gridWidth * 3 / 4), y: Math.floor(gridWidth / 4) },
-          { x: Math.floor(gridWidth / 4), y: Math.floor(gridWidth * 3 / 4) },
-          { x: Math.floor(gridWidth * 3 / 4), y: Math.floor(gridWidth * 3 / 4) }
+          { x: Math.floor((canvasSize / gridSize) / 4), y: Math.floor((canvasSize / gridSize) / 4) },
+          { x: Math.floor((canvasSize / gridSize) * 3 / 4), y: Math.floor((canvasSize / gridSize) / 4) },
+          { x: Math.floor((canvasSize / gridSize) / 4), y: Math.floor((canvasSize / gridSize) * 3 / 4) },
+          { x: Math.floor((canvasSize / gridSize) * 3 / 4), y: Math.floor((canvasSize / gridSize) * 3 / 4) }
         ];
         const player = {
           id: socket.id,
@@ -49,7 +50,7 @@ io.on('connection', (socket) => {
           alive: true
         };
         room.players.push(player);
-        socket.emit('joinedRoom', { roomCode, playerIndex });
+        socket.emit('joinedRoom', { roomCode, playerIndex, playerCount: room.players.length });
         io.to(roomCode).emit('playerJoined', room.players.length);
       } else {
         socket.emit('roomFull');
@@ -58,6 +59,7 @@ io.on('connection', (socket) => {
       socket.emit('roomNotFound');
     }
   });
+
 
   socket.on('startGame', (roomCode) => {
     if (rooms.has(roomCode)) {
@@ -109,10 +111,14 @@ function generateFoods(count) {
 
 function generateFood() {
   return {
-    x: Math.floor(Math.random() * gridWidth),
-    y: Math.floor(Math.random() * gridWidth)
+    x: Math.floor(Math.random() * (canvasSize / gridSize)),
+    y: Math.floor(Math.random() * (canvasSize / gridSize))
   };
 }
+
+
+
+
 
 function gameLoop(roomCode) {
   const room = rooms.get(roomCode);
@@ -127,7 +133,8 @@ function gameLoop(roomCode) {
     };
 
 
-    // 벽과의 충돌 체크
+    //
+    벽과의 충돌 체크
     if (newHead.x < 0 || newHead.x >= canvasSize / gridSize || 
         newHead.y < 0 || newHead.y >= canvasSize / gridSize) {
       player.alive = false;
