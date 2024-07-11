@@ -3,11 +3,12 @@ const socket = io();
 let players = [];
 let foods = [];
 const gridSize = 20;
-const canvasSize = 350;
+const canvasSize = 400;
 let roomCode = '';
 let gameStarted = false;
 let myPlayerIndex = -1;
 let canvas;
+let joined = false;
 
 // 터치 이벤트를 위한 변수
 let xDown = null;
@@ -111,15 +112,22 @@ function handleTouchMove(evt) {
   evt.preventDefault();
 }
 
-// 나머지 코드는 그대로 유지
 document.getElementById('createRoom').addEventListener('click', () => {
-  socket.emit('createRoom');
+  if (!joined) {
+    socket.emit('createRoom');
+  } else {
+    alert('You have already joined a room on this device.');
+  }
 });
 
 document.getElementById('joinRoom').addEventListener('click', () => {
-  const roomCodeInput = document.getElementById('roomCodeInput');
-  if (roomCodeInput.value) {
-    socket.emit('joinRoom', roomCodeInput.value);
+  if (!joined) {
+    const roomCodeInput = document.getElementById('roomCodeInput');
+    if (roomCodeInput.value) {
+      socket.emit('joinRoom', roomCodeInput.value);
+    }
+  } else {
+    alert('You have already joined a room on this device.');
   }
 });
 
@@ -129,28 +137,40 @@ document.getElementById('startGame').addEventListener('click', () => {
 
 socket.on('roomCreated', (code) => {
   roomCode = code;
+  joined = true;
   document.getElementById('roomCode').innerText = `Room Code: ${roomCode}`;
   document.getElementById('startGame').style.display = 'inline-block';
+  updatePlayerCount(1);
 });
 
 socket.on('joinedRoom', (data) => {
   roomCode = data.roomCode;
   myPlayerIndex = data.playerIndex;
+  joined = true;
   document.getElementById('roomCode').innerText = `Room Code: ${roomCode}`;
   if (myPlayerIndex === 0) {
     document.getElementById('startGame').style.display = 'inline-block';
   }
+  updatePlayerCount(data.playerCount);
 });
 
 socket.on('playerJoined', (playerCount) => {
   console.log(`Players in room: ${playerCount}`);
+  updatePlayerCount(playerCount);
 });
+
+function updatePlayerCount(count) {
+  document.getElementById('playerCount').innerText = `Players in room: ${count}`;
+}
 
 socket.on('gameStarted', (data) => {
   gameStarted = true;
   players = data.players;
   foods = data.foods;
   document.getElementById('menu').style.display = 'none';
+  
+  canvas.elt.addEventListener('touchmove', preventScroll, { passive: false });
+  canvas.elt.addEventListener('wheel', preventScroll, { passive: false });
 });
 
 socket.on('gameState', (data) => {
