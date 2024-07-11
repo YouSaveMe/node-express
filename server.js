@@ -31,15 +31,17 @@ io.on('connection', (socket) => {
         socket.join(roomCode);
         const playerIndex = room.players.length;
         const startPositions = [
-          { x: 0, y: 0 },
-          { x: canvasSize - gridSize, y: 0 },
-          { x: 0, y: canvasSize - gridSize },
-          { x: canvasSize - gridSize, y: canvasSize - gridSize }
+          { x: 1, y: 1 },
+          { x: (canvasSize / gridSize) - 2, y: 1 },
+          { x: 1, y: (canvasSize / gridSize) - 2 },
+          { x: (canvasSize / gridSize) - 2, y: (canvasSize / gridSize) - 2 }
         ];
         const player = {
           id: socket.id,
-          x: startPositions[playerIndex].x,
-          y: startPositions[playerIndex].y,
+          segments: [{ 
+            x: startPositions[playerIndex].x, 
+            y: startPositions[playerIndex].y 
+          }],
           color: ['red', 'green', 'blue', 'yellow'][playerIndex],
           direction: { x: 1, y: 0 },
           score: 0,
@@ -71,7 +73,10 @@ io.on('connection', (socket) => {
       const room = rooms.get(roomCode);
       const player = room.players.find(p => p.id === socket.id);
       if (player && player.alive) {
-        player.direction = direction;
+        // 반대 방향으로의 이동을 막습니다.
+        if (!(player.direction.x === -direction.x && player.direction.y === -direction.y)) {
+          player.direction = direction;
+        }
       }
     }
   });
@@ -86,7 +91,6 @@ io.on('connection', (socket) => {
         if (room.players.length === 0) {
           rooms.delete(roomCode);
         } else if (room.gameStarted) {
-          // 게임 중 플레이어가 나가면 먹이 수를 조정
           room.foods = adjustFoodCount(room.foods, room.players.length);
         }
       }
@@ -104,8 +108,8 @@ function generateFoods(count) {
 
 function generateFood() {
   return {
-    x: Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize,
-    y: Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize
+    x: Math.floor(Math.random() * (canvasSize / gridSize)),
+    y: Math.floor(Math.random() * (canvasSize / gridSize))
   };
 }
 
@@ -127,26 +131,53 @@ function gameLoop(roomCode) {
   room.players.forEach(player => {
     if (!player.alive) return;
 
-    player.x += player.direction.x * gridSize;
-    player.y += player.direction.y * gridSize;
+    // 머리 위치 업데이트
+    const newHead = {
+      x: player.segments[0].x + player.direction.x,
+      y: player.segments[0].y + player.direction.y
+    };
 
-    player.x = (player.x + canvasSize) % canvasSize;
-    player.y = (player.y + canvasSize) % canvasSize;
+    // 벽과의 충돌 체크
+    if (newHead.x < 0 || newHead.x >= canvasSize / gridSize || 
+        newHead.y < 0 || newHead.y >= canvasSize / gridSize) {
+      player.alive = false;
+      return;
+    }
 
-    // 충돌 감지
+    // 다른 플레이어와의 충돌 체크
     room.players.forEach(otherPlayer => {
-      if (otherPlayer !== player && otherPlayer.alive && otherPlayer.x === player.x && otherPlayer.y === player.y) {
-        player.alive = false;
+      if (otherPlayer.alive) {
+        for (let segment of otherPlayer.segments) {
+          if (newHead.x === segment.x && newHead.y === segment.y) {
+            if (player !== otherPlayer) {
+              if (player.segments.length <= otherPlayer.segments.length) {
+                player.alive = false;
+              } else {
+                otherPlayer.alive = false;
+              }
+            } else if (player === otherPlayer && player.segments.length > 1) {
+              // 자기 자신과 충돌
+              player.alive = false;
+            }
+            return;
+          }
+        }
       }
     });
 
+    if (!player.alive) return;
+
     // 먹이 먹기
-    const foodIndex = room.foods.findIndex(food => food.x === player.x && food.y === player.y);
+    const foodIndex = room.foods.findIndex(food => food.x === newHead.x && food.y === newHead.y);
     if (foodIndex !== -1) {
       room.foods.splice(foodIndex, 1);
       room.foods.push(generateFood());
       player.score += 10;
+    } else {
+      player.segments.pop(); // 꼬리 제거
     }
+
+    player.segments.unshift(newHead); // 새로운 머리 추가
   });
 
   // 게임 종료 조건 확인
