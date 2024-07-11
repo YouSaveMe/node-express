@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Worm Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: Arial, sans-serif; }
+        #gameContainer { text-align: center; }
+        #menu { margin-bottom: 20px; }
+        button { margin: 5px; padding: 10px; font-size: 16px; }
+        #roomCode { font-size: 24px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="menu">
+            <button id="createRoom">Create Room</button>
+            <input type="text" id="roomCodeInput" placeholder="Enter Room Code">
+            <button id="joinRoom">Join Room</button>
+            <button id="startGame" style="display:none;">Start Game</button>
+        </div>
+        <div id="roomCode"></div>
+        <div id="gameCanvas"></div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
