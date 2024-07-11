@@ -49,6 +49,7 @@ function draw() {
     });
   }
 }
+
 function keyPressed() {
   if (!gameStarted || myPlayerIndex === -1 || !players[myPlayerIndex].alive) return;
   
@@ -144,10 +145,11 @@ socket.on('roomCreated', (code) => {
 
 socket.on('joinedRoom', (data) => {
   roomCode = data.roomCode;
-  myPlayerNumber = data.playerNumber;
+  myPlayerNumber = data.playerNumber;  // 서버에서 받은 플레이어 번호 저장
   joined = true;
   document.getElementById('roomCode').innerText = `Room Code: ${roomCode}`;
-  if (myPlayerNumber === 1) {
+  document.getElementById('playerInfo').innerText = `You are Player ${myPlayerNumber}`;  // 플레이어 번호 표시
+  if (myPlayerNumber === 1) {  // 첫 번째 플레이어만 시작 버튼을 볼 수 있음
     document.getElementById('startGame').style.display = 'inline-block';
   }
   updatePlayerCount(data.playerCount);
