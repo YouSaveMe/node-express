@@ -92,6 +92,18 @@ socket.on('startGame', (roomCode) => {
   });
 });
 
+// ... (이전 코드는 그대로 유지)
+
+function getRandomDirection() {
+  const directions = [
+    { x: 1, y: 0 },   // 오른쪽
+    { x: -1, y: 0 },  // 왼쪽
+    { x: 0, y: 1 },   // 아래
+    { x: 0, y: -1 }   // 위
+  ];
+  return directions[Math.floor(Math.random() * directions.length)];
+}
+
 function addPlayerToRoom(socket, roomCode) {
   const room = rooms.get(roomCode);
   const playerNumber = room.players.length + 1;
@@ -109,7 +121,7 @@ function addPlayerToRoom(socket, roomCode) {
       y: startPositions[playerNumber - 1].y 
     }],
     color: ['white', 'green', 'blue', 'yellow'][playerNumber - 1],
-    direction: { x: 1, y: 0 },
+    direction: getRandomDirection(),  // 랜덤 방향 설정
     score: 0,
     alive: true
   };
@@ -126,6 +138,25 @@ function addPlayerToRoom(socket, roomCode) {
   });
 }
 
+socket.on('startGame', (roomCode) => {
+  if (rooms.has(roomCode)) {
+    const room = rooms.get(roomCode);
+    if (room.players.length >= 2) {
+      room.gameStarted = true;
+      // 게임 시작 시 각 플레이어의 방향을 다시 랜덤하게 설정
+      room.players.forEach(player => {
+        player.direction = getRandomDirection();
+      });
+      room.foods = generateFoods(room.players.length);
+      io.to(roomCode).emit('gameStarted', { players: room.players, foods: room.foods });
+      gameLoop(roomCode);
+    } else {
+      socket.emit('notEnoughPlayers');
+    }
+  }
+});
+
+// ... (이후 코드는 그대로 유지)
 function generateFoods(count) {
   const foods = [];
   for (let i = 0; i < count; i++) {
