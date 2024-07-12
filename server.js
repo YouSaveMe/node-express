@@ -8,7 +8,7 @@ app.use(express.static('public'));
 
 const rooms = new Map();
 const gridSize = 20;
-const canvasSize = 340;
+const canvasSize = 400;
 const gridWidth = canvasSize / gridSize;
 
 function generateRoomCode() {
