@@ -51,7 +51,7 @@ function draw() {
 }
 
 function keyPressed() {
-  if (!gameStarted || myPlayerIndex === -1 || !players[myPlayerIndex].alive) return;
+  if (!gameStarted || myPlayerNumber === -1 || !players[myPlayerNumber - 1].alive) return;
   
   let direction = { x: 0, y: 0 };
   if (keyCode === LEFT_ARROW) direction = { x: -1, y: 0 };
@@ -98,7 +98,7 @@ function handleTouchMove(evt) {
     }
   }
 
-  if (gameStarted && myPlayerIndex !== -1 && players[myPlayerIndex].alive) {
+  if (gameStarted && myPlayerNumber !== -1 && players[myPlayerNumber - 1].alive) {
     if (direction.x !== 0 || direction.y !== 0) {
       socket.emit('changeDirection', { roomCode, direction });
     }
@@ -140,28 +140,46 @@ socket.on('roomCreated', (code) => {
   joined = true;
   document.getElementById('roomCode').innerText = `Room Code: ${roomCode}`;
   document.getElementById('startGame').style.display = 'inline-block';
-  updatePlayerCount(1);
 });
 
 socket.on('joinedRoom', (data) => {
   roomCode = data.roomCode;
-  myPlayerNumber = data.playerNumber;  // 서버에서 받은 플레이어 번호 저장
+  myPlayerNumber = data.playerNumber;
   joined = true;
   document.getElementById('roomCode').innerText = `Room Code: ${roomCode}`;
-  document.getElementById('playerInfo').innerText = `You are Player ${myPlayerNumber}`;  // 플레이어 번호 표시
-  if (myPlayerNumber === 1) {  // 첫 번째 플레이어만 시작 버튼을 볼 수 있음
+  document.getElementById('playerInfo').innerText = `You are Player ${myPlayerNumber}`;
+  if (myPlayerNumber === 1) {
     document.getElementById('startGame').style.display = 'inline-block';
   }
+  updatePlayerList(data.players);
   updatePlayerCount(data.playerCount);
 });
 
-socket.on('playerJoined', (playerCount) => {
-  console.log(`Players in room: ${playerCount}`);
-  updatePlayerCount(playerCount);
+socket.on('playerJoined', (data) => {
+  console.log(`Players in room: ${data.playerCount}`);
+  updatePlayerCount(data.playerCount);
+  updatePlayerList(data.players);
+});
+
+socket.on('playerLeft', (data) => {
+  console.log(`A player left. Players remaining: ${data.playerCount}`);
+  updatePlayerCount(data.playerCount);
+  updatePlayerList(data.players);
 });
 
 function updatePlayerCount(count) {
   document.getElementById('playerCount').innerText = `Players in room: ${count}`;
+}
+
+function updatePlayerList(playerList) {
+  players = playerList;
+  const playerListElement = document.getElementById('playerList');
+  playerListElement.innerHTML = '';
+  players.forEach(player => {
+    const playerItem = document.createElement('li');
+    playerItem.textContent = `Player ${player.number} (${player.color})`;
+    playerListElement.appendChild(playerItem);
+  });
 }
 
 socket.on('gameStarted', (data) => {
@@ -184,36 +202,4 @@ socket.on('gameOver', (rankings) => {
   const gameOverDiv = document.createElement('div');
   gameOverDiv.innerHTML = '<h2>Game Over</h2><h3>Final Rankings:</h3>';
   rankings.forEach((player, index) => {
-    gameOverDiv.innerHTML += `<p>${index + 1}. Player ${players.findIndex(p => p.id === player.id) + 1}: ${player.score}</p>`;
-  });
-  gameOverDiv.innerHTML += '<button onclick="location.reload()">Play Again</button>';
-  document.body.appendChild(gameOverDiv);
-});
-
-socket.on('roomFull', () => {
-  alert('The room is full or the game has already started.');
-});
-
-socket.on('roomNotFound', () => {
-  alert('Room not found. Please check the room code.');
-});
-
-socket.on('playerLeft', (playerCount) => {
-  console.log(`A player left. Players remaining: ${playerCount}`);
-});
-
-function preventScroll(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  return false;
-}
-
-socket.on('gameStarted', (data) => {
-  gameStarted = true;
-  players = data.players;
-  foods = data.foods;
-  document.getElementById('menu').style.display = 'none';
-  
-  canvas.elt.addEventListener('touchmove', preventScroll, { passive: false });
-  canvas.elt.addEventListener('wheel', preventScroll, { passive: false });
-});
+    gameOverDiv.innerHTML += `<p>${index + 1}. Player ${
