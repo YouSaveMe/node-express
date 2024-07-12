@@ -40,18 +40,22 @@
     </style>
 </head>
 <body>
-    <div id="gameContainer">
+    <div id="gameWrapper">
+      <div id="gameContainer">
         <div id="menu">
-            <button id="createRoom">Create Room</button>
-            <input type="text" id="roomCodeInput" placeholder="Enter Room Code">
-            <button id="joinRoom">Join Room</button>
-            <button id="startGame" style="display:none;">Start Game</button>
+          <button id="createRoom">Create Room</button>
+          <input type="text" id="roomCodeInput" placeholder="Enter Room Code">
+          <button id="joinRoom">Join Room</button>
+          <button id="startGame" style="display:none;">Start Game</button>
         </div>
         <div id="roomCode"></div>
         <div id="playerCount"></div>
         <div id="gameCanvas"></div>
         <div id="playerInfo"></div>
-        <ul id="playerList"></ul>
+        <div id="gameOverDiv" style="display: none;"></div>
+      </div>
+    </div>
+    <ul id="playerList"></ul>
 
     <script src="game.js"></script>
 </body>
