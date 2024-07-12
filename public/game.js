@@ -13,6 +13,9 @@ let joined = false;
 // 터치 이벤트를 위한 변수
 let xDown = null;
 let yDown = null;
+let lastTouchTime = 0;
+const touchThreshold = 30; // 픽셀 단위의 최소 스와이프 거리
+const touchCooldown = 100; // 밀리초 단위의 연속 터치 사이의 최소 시간
 
 function setup() {
   canvas = createCanvas(canvasSize, canvasSize);
@@ -21,6 +24,7 @@ function setup() {
   
   canvas.elt.addEventListener('touchstart', handleTouchStart, false);
   canvas.elt.addEventListener('touchmove', handleTouchMove, false);
+  canvas.elt.addEventListener('touchend', handleTouchEnd, false);
 }
 
 function draw() {
@@ -82,34 +86,37 @@ function handleTouchMove(evt) {
   const xDiff = xDown - xUp;
   const yDiff = yDown - yUp;
 
-  let direction = { x: 0, y: 0 };
-
-  if (Math.abs(xDiff) > Math.abs(yDiff)) {
-    if (xDiff > 0) {
-      direction = { x: -1, y: 0 }; // 왼쪽으로 스와이프
-    } else {
-      direction = { x: 1, y: 0 }; // 오른쪽으로 스와이프
-    }
-  } else {
-    if (yDiff > 0) {
-      direction = { x: 0, y: -1 }; // 위로 스와이프
-    } else {
-      direction = { x: 0, y: 1 }; // 아래로 스와이프
-    }
+  const currentTime = new Date().getTime();
+  if (currentTime - lastTouchTime < touchCooldown) {
+    return;
   }
 
-  if (gameStarted && myPlayerNumber !== -1 && players[myPlayerNumber - 1].alive) {
-    if (direction.x !== 0 || direction.y !== 0) {
+  if (Math.abs(xDiff) > touchThreshold || Math.abs(yDiff) > touchThreshold) {
+    let direction = { x: 0, y: 0 };
+
+    if (Math.abs(xDiff) > Math.abs(yDiff)) {
+      direction.x = xDiff > 0 ? -1 : 1;
+    } else {
+      direction.y = yDiff > 0 ? -1 : 1;
+    }
+
+    if (gameStarted && myPlayerNumber !== -1 && players[myPlayerNumber - 1] && players[myPlayerNumber - 1].alive) {
       socket.emit('changeDirection', { roomCode, direction });
+      lastTouchTime = currentTime;
     }
+
+    // 터치 좌표 리셋
+    xDown = null;
+    yDown = null;
   }
 
-  // 터치 이벤트 초기화
+  evt.preventDefault();
+}
+
+function handleTouchEnd(evt) {
+  // 터치 종료 시 좌표 리셋
   xDown = null;
   yDown = null;
-  
-  // 이벤트의 기본 동작과 전파 방지
-  evt.preventDefault();
 }
 
 document.getElementById('createRoom').addEventListener('click', () => {
