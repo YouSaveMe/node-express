@@ -206,25 +206,18 @@ socket.on('gameState', (data) => {
 
 socket.on('gameOver', (rankings) => {
   gameStarted = false;
-  const gameOverDiv = document.createElement('div');
-  gameOverDiv.id = 'gameOverDiv';
+  const gameOverDiv = document.getElementById('gameOverDiv');
   gameOverDiv.innerHTML = '<h2>Game Over</h2><h3>Final Rankings:</h3>';
   rankings.forEach((player, index) => {
     gameOverDiv.innerHTML += `<p>${index + 1}. Player ${player.number}: ${player.score}</p>`;
   });
   gameOverDiv.innerHTML += '<button onclick="restartGame()">Play Again</button>';
-  
-  // 게임 컨테이너 아래에 게임 오버 div 추가
-  const gameContainer = document.getElementById('gameContainer');
-  gameContainer.parentNode.insertBefore(gameOverDiv, gameContainer.nextSibling);
+  gameOverDiv.style.display = 'flex';
 });
 
-// 게임 재시작 함수 추가
 function restartGame() {
   const gameOverDiv = document.getElementById('gameOverDiv');
-  if (gameOverDiv) {
-    gameOverDiv.remove();
-  }
+  gameOverDiv.style.display = 'none';
   location.reload();
 }
 
