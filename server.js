@@ -44,19 +44,7 @@ io.on('connection', (socket) => {
     }
   });
 
-socket.on('startGame', (roomCode) => {
-  if (rooms.has(roomCode)) {
-    const room = rooms.get(roomCode);
-    if (room.players.length >= 2) {  // 최소 2명 이상 체크
-      room.gameStarted = true;
-      room.foods = generateFoods(room.players.length);
-      io.to(roomCode).emit('gameStarted', { players: room.players, foods: room.foods });
-      gameLoop(roomCode);
-    } else {
-      socket.emit('notEnoughPlayers');  // 플레이어가 부족할 경우 새로운 이벤트 발생
-    }
-  }
-});
+
   
   socket.on('changeDirection', ({ roomCode, direction }) => {
     if (rooms.has(roomCode)) {
