@@ -12,11 +12,14 @@
         margin: 0;
         padding: 20px;
         background-color: #f0f0f0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
       }
       #gameWrapper {
         width: 100%;
-        max-width: 600px;
-        margin: 0 auto;
+        max-width: 400px;
         background-color: white;
         border-radius: 10px;
         padding: 20px;
@@ -34,7 +37,10 @@
         border: 1px solid #ddd;
       }
       #menu {
-        margin-bottom: 15px;
+        margin-bottom: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
       }
       #menu button, #menu input {
         margin: 5px;
@@ -42,15 +48,18 @@
         font-size: 14px;
       }
       #roomCode, #playerCount, #playerInfo {
-        margin-bottom: 10px;
+        margin-bottom: 5px;
+        font-size: 14px;
+        text-align: center;
       }
       #playerList {
         list-style-type: none;
         padding: 0;
         margin: 0;
+        font-size: 14px;
       }
       #playerList li {
-        padding: 5px 0;
+        padding: 3px 0;
         border-bottom: 1px solid #eee;
       }
       #gameOverDiv {
@@ -80,21 +89,30 @@
       #gameOverDiv button:hover {
         background-color: #45a049;
       }
+      @media (max-width: 440px) {
+        #gameWrapper {
+          padding: 10px;
+        }
+        #menu button, #menu input {
+          font-size: 12px;
+          padding: 6px 10px;
+        }
+      }
     </style>    
 </head>
 <body>
     <div id="gameWrapper">
+      <div id="menu">
+        <button id="createRoom">Create Room</button>
+        <input type="text" id="roomCodeInput" placeholder="Enter Room Code">
+        <button id="joinRoom">Join Room</button>
+        <button id="startGame" style="display:none;">Start Game</button>
+      </div>
+      <div id="roomCode"></div>
+      <div id="playerCount"></div>
+      <div id="playerInfo"></div>
       <div id="gameContainer">
-        <div id="menu">
-          <button id="createRoom">Create Room</button>
-          <input type="text" id="roomCodeInput" placeholder="Enter Room Code">
-          <button id="joinRoom">Join Room</button>
-          <button id="startGame" style="display:none;">Start Game</button>
-        </div>
-        <div id="roomCode"></div>
-        <div id="playerCount"></div>
         <div id="gameCanvas"></div>
-        <div id="playerInfo"></div>
         <div id="gameOverDiv" style="display: none;"></div>
       </div>
       <ul id="playerList"></ul>
