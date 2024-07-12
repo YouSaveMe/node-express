@@ -3,7 +3,7 @@ const socket = io();
 let players = [];
 let foods = [];
 const gridSize = 20;
-const canvasSize = 340;
+const canvasSize = 400;
 let roomCode = '';
 let gameStarted = false;
 let myPlayerNumber = -1;
@@ -202,4 +202,14 @@ socket.on('gameOver', (rankings) => {
   const gameOverDiv = document.createElement('div');
   gameOverDiv.innerHTML = '<h2>Game Over</h2><h3>Final Rankings:</h3>';
   rankings.forEach((player, index) => {
-    gameOverDiv.innerHTML += `<p>${index + 1}. Player ${
+    gameOverDiv.innerHTML += `<p>${index + 1}. Player ${player.number}: ${player.score}</p>`;
+  });
+  gameOverDiv.innerHTML += '<button onclick="location.reload()">Play Again</button>';
+  document.body.appendChild(gameOverDiv);
+});
+
+function preventScroll(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  return false;
+}
