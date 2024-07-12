@@ -160,18 +160,38 @@ socket.on('joinedRoom', (data) => {
   }
   updatePlayerList(data.players);
   updatePlayerCount(data.playerCount);
+  updateStartButton(data.playerCount);  // 새로운 함수 호출
 });
 
 socket.on('playerJoined', (data) => {
   console.log(`Players in room: ${data.playerCount}`);
   updatePlayerCount(data.playerCount);
   updatePlayerList(data.players);
+  updateStartButton(data.playerCount);  // 새로운 함수 호출
 });
 
 socket.on('playerLeft', (data) => {
   console.log(`A player left. Players remaining: ${data.playerCount}`);
   updatePlayerCount(data.playerCount);
   updatePlayerList(data.players);
+  updateStartButton(data.playerCount);  // 새로운 함수 호출
+});
+
+function updateStartButton(playerCount) {
+  const startButton = document.getElementById('startGame');
+  if (myPlayerNumber === 1) {
+    if (playerCount >= 2) {
+      startButton.disabled = false;
+      startButton.textContent = 'Start Game';
+    } else {
+      startButton.disabled = true;
+      startButton.textContent = 'Waiting for players...';
+    }
+  }
+}
+
+socket.on('notEnoughPlayers', () => {
+  alert('Not enough players to start the game. Minimum 2 players required.');
 });
 
 function updatePlayerCount(count) {
