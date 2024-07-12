@@ -8,7 +8,7 @@ app.use(express.static('public'));
 
 const rooms = new Map();
 const gridSize = 20;
-const canvasSize = 400;
+const canvasSize = 340;
 const gridWidth = canvasSize / gridSize;
 
 function generateRoomCode() {
@@ -132,14 +132,20 @@ function generateFoods(count) {
 
 function generateFood() {
   return {
-    x: Math.floor(Math.random() * (canvasSize / gridSize)),
-    y: Math.floor(Math.random() * (canvasSize / gridSize))
+    x: Math.floor(Math.random() * gridWidth),
+    y: Math.floor(Math.random() * gridWidth)
   };
 }
 
-
-
-
+function adjustFoodCount(foods, playerCount) {
+  while (foods.length > playerCount) {
+    foods.pop();
+  }
+  while (foods.length < playerCount) {
+    foods.push(generateFood());
+  }
+  return foods;
+}
 
 function gameLoop(roomCode) {
   const room = rooms.get(roomCode);
@@ -153,27 +159,20 @@ function gameLoop(roomCode) {
       y: (player.segments[0].y + player.direction.y + gridWidth) % gridWidth
     };
 
-
-    //벽과의 충돌 체크
-    if (newHead.x < 0 || newHead.x >= canvasSize / gridSize || 
-        newHead.y < 0 || newHead.y >= canvasSize / gridSize) {
+    // Check collision with walls
+    if (newHead.x < 0 || newHead.x >= gridWidth || newHead.y < 0 || newHead.y >= gridWidth) {
       player.alive = false;
       return;
     }
 
-    // 다른 플레이어와의 충돌 체크
+    // Check collision with other players
     room.players.forEach(otherPlayer => {
       if (otherPlayer.alive) {
         for (let segment of otherPlayer.segments) {
           if (newHead.x === segment.x && newHead.y === segment.y) {
             if (player !== otherPlayer) {
-              if (player.segments.length <= otherPlayer.segments.length) {
-                player.alive = false;
-              } else {
-                otherPlayer.alive = false;
-              }
-            } else if (player === otherPlayer && player.segments.length > 1) {
-              // 자기 자신과 충돌
+              player.alive = false;
+            } else if (player.segments.length > 1) {
               player.alive = false;
             }
             return;
@@ -182,7 +181,7 @@ function gameLoop(roomCode) {
       }
     });
 
-       if (!player.alive) return;
+    if (!player.alive) return;
 
     const foodIndex = room.foods.findIndex(food => food.x === newHead.x && food.y === newHead.y);
     if (foodIndex !== -1) {
@@ -196,13 +195,15 @@ function gameLoop(roomCode) {
     player.segments.unshift(newHead);
   });
 
-  // 게임 종료 조건 확인
-  // ...
+  // Check game over condition
+  const alivePlayers = room.players.filter(p => p.alive);
+  if (alivePlayers.length <= 1 && room.players.length > 1) {
+    io.to(roomCode).emit('gameOver', room.players.map(p => ({ id: p.id, score: p.score })));
+    rooms.delete(roomCode);
+    return;
+  }
 
-  io.to(roomCode).emit('gameState', { 
-    players: room.players.map(p => ({...p, number: p.number})),  // 플레이어 번호 포함
-    foods: room.foods 
-  });
+  io.to(roomCode).emit('gameState', { players: room.players, foods: room.foods });
 
   setTimeout(() => gameLoop(roomCode), 100);
 }
@@ -211,4 +212,3 @@ const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
