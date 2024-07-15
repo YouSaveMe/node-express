@@ -123,7 +123,7 @@ function addPlayerToRoom(socket, roomCode) {
       x: startPositions[playerNumber - 1].x, 
       y: startPositions[playerNumber - 1].y 
     }],
-    color: ['white', 'green', 'blue', 'yellow', 'purple', 'orange'][playerNumber - 1],
+    color: ['grey', 'green', 'blue', 'yellow', 'purple', 'orange'][playerNumber - 1],
     direction: getRandomDirection(),
     score: 0,
     alive: true
