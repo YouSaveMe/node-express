@@ -33,7 +33,7 @@ io.on('connection', (socket) => {
   socket.on('joinRoom', (roomCode) => {
     if (rooms.has(roomCode)) {
       const room = rooms.get(roomCode);
-      if (room.players.length < 4 && !room.gameStarted) {
+      if (room.players.length < 6 && !room.gameStarted) {
         socket.join(roomCode);
         addPlayerToRoom(socket, roomCode);
       } else {
@@ -115,7 +115,9 @@ function addPlayerToRoom(socket, roomCode) {
     { x: Math.floor(gridWidth / 4), y: Math.floor(gridWidth / 4) },
     { x: Math.floor(gridWidth * 3 / 4), y: Math.floor(gridWidth / 4) },
     { x: Math.floor(gridWidth / 4), y: Math.floor(gridWidth * 3 / 4) },
-    { x: Math.floor(gridWidth * 3 / 4), y: Math.floor(gridWidth * 3 / 4) }
+    { x: Math.floor(gridWidth * 3 / 4), y: Math.floor(gridWidth * 3 / 4) },
+    { x: Math.floor(gridWidth / 2), y: Math.floor(gridWidth / 4) },
+    { x: Math.floor(gridWidth / 2), y: Math.floor(gridWidth * 3 / 4) }
   ];
   const player = {
     id: socket.id,
@@ -124,8 +126,8 @@ function addPlayerToRoom(socket, roomCode) {
       x: startPositions[playerNumber - 1].x, 
       y: startPositions[playerNumber - 1].y 
     }],
-    color: ['white', 'green', 'blue', 'yellow'][playerNumber - 1],
-    direction: getRandomDirection(),  // 랜덤 방향 설정
+    color: ['white', 'green', 'blue', 'yellow', 'purple', 'orange'][playerNumber - 1],
+    direction: getRandomDirection(),
     score: 0,
     alive: true
   };
@@ -142,10 +144,10 @@ function addPlayerToRoom(socket, roomCode) {
   });
 }
 
-// ... (이후 코드는 그대로 유지)
 function generateFoods(count) {
   const foods = [];
-  for (let i = 0; i < count; i++) {
+  const maxFoods = Math.min(count * 2, gridWidth * gridWidth / 4); // 먹이 최대 개수 제한
+  for (let i = 0; i < maxFoods; i++) {
     foods.push(generateFood());
   }
   return foods;
