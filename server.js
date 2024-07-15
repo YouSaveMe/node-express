@@ -228,7 +228,7 @@ function gameLoop(roomCode) {
 
   io.to(roomCode).emit('gameState', { players: room.players, foods: room.foods });
 
-  setTimeout(() => gameLoop(roomCode), 100);
+  setTimeout(() => gameLoop(roomCode), 120);
 }
 
 const PORT = process.env.PORT || 3000;
