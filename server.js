@@ -155,7 +155,7 @@ function addPlayerToRoom(socket, roomCode) {
 
 function generateFoods(count) {
   const foods = [];
-  const maxFoods = Math.min(count * 2, gridWidth * gridWidth / 4); // 먹이 최대 개수 제한
+  const maxFoods = Math.min(count, gridWidth * gridWidth / 4); // 먹이 최대 개수 제한
   for (let i = 0; i < maxFoods; i++) {
     foods.push(generateFood());
   }
