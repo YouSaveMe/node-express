@@ -26,6 +26,18 @@ io.on('connection', (socket) => {
     }));
     socket.emit('roomList', roomList);
   });
+  
+  socket.on('createRoom', () => {
+    const roomCode = generateRoomCode();
+    rooms.set(roomCode, { 
+      players: [], 
+      foods: [], 
+      gameStarted: false
+    });
+    socket.join(roomCode);
+    addPlayerToRoom(socket, roomCode);
+    socket.emit('roomCreated', roomCode);
+  });
 
   socket.on('joinRoom', (roomCode) => {
     if (rooms.has(roomCode)) {
