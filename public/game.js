@@ -129,13 +129,44 @@ document.getElementById('createRoom').addEventListener('click', () => {
 
 document.getElementById('joinRoom').addEventListener('click', () => {
   if (!joined) {
-    const roomCodeInput = document.getElementById('roomCodeInput');
-    if (roomCodeInput.value) {
-      socket.emit('joinRoom', roomCodeInput.value);
-    }
+    socket.emit('getRoomList');
   } else {
     alert('You have already joined a room on this device.');
   }
+});
+
+socket.on('roomList', (roomList) => {
+  const roomListElement = document.getElementById('roomList');
+  roomListElement.innerHTML = '';
+  
+  if (roomList.length === 0) {
+    roomListElement.innerHTML = '<p>No rooms available. Create a new room!</p>';
+    return;
+  }
+
+  const selectElement = document.createElement('select');
+  selectElement.id = 'roomSelect';
+
+  roomList.forEach(room => {
+    if (!room.gameStarted) {
+      const option = document.createElement('option');
+      option.value = room.code;
+      option.textContent = `Room ${room.code} (${room.playerCount} players)`;
+      selectElement.appendChild(option);
+    }
+  });
+
+  const joinButton = document.createElement('button');
+  joinButton.textContent = 'Join Selected Room';
+  joinButton.onclick = () => {
+    const selectedRoom = document.getElementById('roomSelect').value;
+    if (selectedRoom) {
+      socket.emit('joinRoom', selectedRoom);
+    }
+  };
+
+  roomListElement.appendChild(selectElement);
+  roomListElement.appendChild(joinButton);
 });
 
 document.getElementById('startGame').addEventListener('click', () => {
