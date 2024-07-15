@@ -46,10 +46,10 @@ function draw() {
     }
     
     fill(255);
-    textSize(16);
+    textSize(12);
     textAlign(LEFT, TOP);
-    players.forEach((player) => {
-      text(`Player ${player.number}: ${player.score}`, 10, 10 + (player.number - 1) * 20);
+    players.forEach((player, index) => {
+      text(`Player ${player.number}: ${player.score}`, 10, 10 + index * 15);
     });
   }
 }
@@ -205,6 +205,7 @@ function updatePlayerList(playerList) {
   players.forEach(player => {
     const playerItem = document.createElement('li');
     playerItem.textContent = `Player ${player.number} (${player.color})`;
+    playerItem.style.color = player.color;
     playerListElement.appendChild(playerItem);
   });
 }
