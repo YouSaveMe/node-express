@@ -18,16 +18,13 @@ function generateRoomCode() {
 io.on('connection', (socket) => {
   console.log('A user connected');
 
-  socket.on('createRoom', () => {
-    const roomCode = generateRoomCode();
-    rooms.set(roomCode, { 
-      players: [], 
-      foods: [], 
-      gameStarted: false
-    });
-    socket.join(roomCode);
-    addPlayerToRoom(socket, roomCode);
-    socket.emit('roomCreated', roomCode);
+  socket.on('getRoomList', () => {
+    const roomList = Array.from(rooms.entries()).map(([code, room]) => ({
+      code,
+      playerCount: room.players.length,
+      gameStarted: room.gameStarted
+    }));
+    socket.emit('roomList', roomList);
   });
 
   socket.on('joinRoom', (roomCode) => {
